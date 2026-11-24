@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8f5">
+  <title>Layout Lab · 家具与窗户布局优化</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Crect width='36' height='36' rx='8' fill='%231b5548'/%3E%3Cpath d='M9 24V12l9-5 9 5v12l-9 5zM9 12l9 5 9-5M18 17v12' fill='none' stroke='%23e7f2eb' stroke-width='1.8'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="vendor/three.min.js"></script>
+  <script defer src="vendor/icons.js"></script>
+  <script defer src="demo-data.js"></script>
+  <script defer src="scene.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topinner">
+      <a class="brand" href="#main"><span class="brand-mark" data-icon="box"></span><span>Layout Lab</span></a>
+      <nav aria-label="页面导航">
+        <a href="#main" class="active">布局对照</a>
+        <a href="#experiments">实验分析</a>
+      </nav>
+      <span class="archive-tag">实验回放</span>
+    </div>
+  </header>
+
+  <main class="shell" id="main">
+    <section aria-labelledby="page-title">
+      <div class="page-heading">
+        <div>
+          <h1 id="page-title">家具与窗户布局优化</h1>
+          <p class="subtitle">二维约束求解 · 三维场景对照</p>
+        </div>
+        <dl class="overview">
+          <div><dd>08</dd><dt>预设场景</dt></div>
+          <div><dd>03</dd><dt>对照算法</dt></div>
+          <div><dd id="runTotal">720</dd><dt>实验运行</dt></div>
+        </dl>
+      </div>
+
+      <div class="controls">
+        <div class="room-types" id="roomTypes" aria-label="房型"></div>
+        <div class="segmented room-sizes" id="roomSizes" role="group" aria-label="房间尺寸">
+          <button type="button" data-size="standard" aria-pressed="false">标准</button>
+          <button type="button" data-size="compact" aria-pressed="true">紧凑</button>
+        </div>
+      </div>
+
+      <div class="stage-head">
+        <div>
+          <h2 id="roomTitle">紧凑厨房</h2>
+          <p class="room-dimensions" id="roomDimensions"></p>
+        </div>
+        <div class="run-controls">
+          <label class="select-wrap"><span>算法</span><select id="methodSelect" aria-label="对照算法">
+            <option value="ga">遗传算法</option>
+            <option value="random">随机搜索</option>
+            <option value="ga_no_mutation">无变异遗传算法</option>
+          </select><span aria-hidden="true" data-icon="chevron-down"></span></label>
+          <label class="select-wrap seed-wrap"><span>种子</span><select id="seedSelect" aria-label="随机种子"></select><span aria-hidden="true" data-icon="chevron-down"></span></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="comparison" aria-label="优化前后场景">
+      <div class="scene-toolbar">
+        <div class="scene-legend" aria-label="场景图例">
+          <span><i class="swatch zone-swatch"></i>门前区 / 通道</span>
+          <span id="functionalLegend"><i class="swatch functional-swatch"></i><span id="functionalName">操作净空</span></span>
+          <span><i class="swatch window-swatch"></i>窗户</span>
+        </div>
+        <div class="view-tools" role="group" aria-label="视图设置">
+          <button id="mode3d" class="icon-button" type="button" title="三维视图" aria-label="三维视图" aria-pressed="true" data-icon="box"></button>
+          <button id="mode2d" class="icon-button" type="button" title="平面俯视" aria-label="平面俯视" aria-pressed="false" data-icon="scan"></button>
+          <button id="toggleLabels" class="icon-button" type="button" title="家具标签" aria-label="家具标签" aria-pressed="false" data-icon="tags"></button>
+          <button id="toggleZones" class="icon-button" type="button" title="显示保留区" aria-label="显示保留区" aria-pressed="true" data-icon="layers"></button>
+          <button id="resetCamera" class="icon-button" type="button" title="重置视角" aria-label="重置视角" data-icon="rotate-ccw"></button>
+        </div>
+      </div>
+
+      <div class="scene-grid">
+        <article class="scene-panel">
+          <div class="scene-title"><span class="index-badge">A</span><h3>初始布局</h3><span class="status" id="initialStatus"></span></div>
+          <div id="initialView" class="canvas-host" aria-label="初始布局模型" tabindex="0"></div>
+          <div class="scene-footer"><span>总成本 <strong id="initialCost"></strong></span><span>违规面积 <strong id="initialViolation"></strong></span></div>
+        </article>
+        <article class="scene-panel optimized">
+          <div class="scene-title"><span class="index-badge">B</span><h3>优化结果</h3><span class="status" id="bestStatus"></span></div>
+          <div id="bestView" class="canvas-host" aria-label="优化结果模型" tabindex="0"></div>
+          <div class="scene-footer"><span>总成本 <strong id="bestCost"></strong></span><span>违规面积 <strong id="bestViolation"></strong></span></div>
+        </article>
+      </div>
+      <div class="comparison-note"><span><span data-icon="link-2"></span><span id="cameraHint">同步视角 · 拖动旋转，滚轮缩放</span></span><span id="viewNote">3D 高度为展示设定</span></div>
+    </section>
+
+    <section id="experiments" class="experiments" aria-labelledby="analysisTitle">
+      <div class="analysis-head">
+        <h2 id="analysisTitle">算法表现</h2>
+        <p class="budget" id="budget"></p>
+      </div>
+      <div class="analysis-grid">
+        <section class="curve-section" aria-labelledby="curveTitle">
+          <h3 id="curveTitle">收敛曲线 <span id="chartSeed"></span></h3>
+          <div class="curve-key" id="curveKey"></div>
+          <svg id="curve" role="img" aria-label="三种算法的历史最优代价曲线"></svg>
+        </section>
+        <section class="stats-section" aria-labelledby="statsTitle">
+          <h3 id="statsTitle">可行解次数 <span>同一房型 · 30 个种子</span></h3>
+          <div id="statsBars" class="stats-bars"></div>
+          <h3 class="checks-title">约束检查 <span>违规面积 · m²</span></h3>
+          <table class="checks"><thead><tr><th>检查项</th><th>初始</th><th>优化后</th></tr></thead><tbody id="checksBody"></tbody></table>
+        </section>
+      </div>
+    </section>
+    <footer class="footer"><p>页面回放课程项目保存的实验结果。可行性按模型约束判定。</p></footer>
+  </main>
+</body>
+</html>
